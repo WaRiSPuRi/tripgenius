@@ -394,7 +394,7 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--text-dim);borde
       </div>
     </div>
     <div class="modal-actions">
-      <button class="modal-cancel" onclick="closeOverlay('quiz-overlay')">Cancel</button>
+      <button class="modal-cancel" onclick="skipQuiz()">Skip for now</button>
       <button class="modal-submit" onclick="submitQuiz()">Save my profile</button>
     </div>
   </div>
@@ -742,6 +742,8 @@ function isWeatherAvailable(){
 }
 let currentDest='', currentDays=5, currentBudget=200;
 let dayLocations={}, allText='';
+let selectedVibe='Cultural', quizAnswers=null, isGroup=false;
+let totalBudget=0;
 
 // Nav
 function showLanding(){document.getElementById('landing').className='landing';document.getElementById('app-view').className='app-view'}
@@ -766,23 +768,50 @@ function toggleTheme(){
 function openOverlay(id){document.getElementById(id).className='overlay visible'}
 function closeOverlay(id){document.getElementById(id).className='overlay'}
 
-// Quiz
+// Quiz - optional
 function selQ(el){document.querySelectorAll('[data-q="'+el.dataset.q+'"]').forEach(b=>b.classList.remove('selected'));el.classList.add('selected')}
 function submitQuiz(){
   const qs=['pace','accommodation','food','social','priority'],a={};
-  for(const q of qs){const s=document.querySelector('.quiz-opt.selected[data-q="'+q+'"]');if(!s){alert('Please answer all 5 questions!');return}a[q]=s.dataset.v}
-  quizAnswers=a;closeOverlay('quiz-overlay');
+  for(const q of qs){
+    const s=document.querySelector('.quiz-opt.selected[data-q="'+q+'"]');
+    if(!s){ showQuizError('Please answer all 5 questions before saving.'); return; }
+    a[q]=s.dataset.v;
+  }
+  quizAnswers=a;
+  closeOverlay('quiz-overlay');
   document.getElementById('quiz-badge').textContent='Travel profile saved!';
   document.getElementById('quiz-badge').style.color='var(--accent2)';
   document.getElementById('quiz-badge').style.borderColor='rgba(94,234,212,0.3)';
+}
+function showQuizError(msg){
+  let el=document.getElementById('quiz-error');
+  if(!el){el=document.createElement('div');el.id='quiz-error';el.style.cssText='color:#f87171;font-size:13px;margin-top:10px;text-align:center';document.querySelector('#quiz-overlay .modal-actions').before(el)}
+  el.textContent=msg;
+}
+function skipQuiz(){
+  quizAnswers=null;
+  closeOverlay('quiz-overlay');
 }
 
 // Form helpers
 function selVibe(el,v){document.querySelectorAll('.vibe-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');selectedVibe=v}
 function toggleMode(){const m=document.getElementById('trip-mode').value;document.getElementById('single-dest').style.display=m==='single'?'block':'none';document.getElementById('multi-dest').style.display=m==='multi'?'block':'none'}
 function addCity(){const l=document.getElementById('cities-list'),n=l.children.length+1;const r=document.createElement('div');r.className='city-row';r.innerHTML='<input type="text" placeholder="City '+n+'"/><button class="city-remove" onclick="this.parentElement.remove()">✕</button>';l.appendChild(r)}
-function toggleGroup(){isGroup=!isGroup;document.getElementById('group-toggle').textContent=isGroup?'Group':'Solo';document.getElementById('group-toggle').className=isGroup?'group-toggle on':'group-toggle';document.getElementById('group-extra').className=isGroup?'group-extra visible':'group-extra';updateBudgetLabel()}
-function updateBudgetLabel(){const b=parseInt(document.getElementById('budget').value),g=isGroup?parseInt(document.getElementById('group-size').value)||2:1,pp=Math.round(b/g);document.getElementById('budget-val').textContent=isGroup?'$'+b+'/day ($'+pp+'/p)':'$'+b+'/day'}
+function toggleGroup(){
+  isGroup=!isGroup;
+  const btn=document.getElementById('group-toggle');
+  const extra=document.getElementById('group-extra');
+  btn.textContent=isGroup?'Group':'Solo';
+  btn.className=isGroup?'group-toggle on':'group-toggle';
+  extra.className=isGroup?'group-extra visible':'group-extra';
+  updateBudgetLabel();
+}
+function updateBudgetLabel(){
+  const b=parseInt(document.getElementById('budget').value)||200;
+  const g=isGroup?parseInt(document.getElementById('group-size').value)||2:1;
+  const pp=Math.round(b/g);
+  document.getElementById('budget-val').textContent=isGroup?'$'+b+'/day ($'+pp+'/person)':'$'+b+'/day';
+}
 
 // Sample loader
 function loadSample(dest,days,vibe){
@@ -987,14 +1016,18 @@ async function generateNow(){
 async function generateItinerary(){
   const mode=document.getElementById('trip-mode').value;
   let dest='',cities=[];
-  if(mode==='multi'){cities=Array.from(document.querySelectorAll('#cities-list input')).map(i=>i.value.trim()).filter(Boolean);if(cities.length<2){showErr('Please enter at least 2 cities.');return}dest=cities.join(' to ')}
-  else{dest=document.getElementById('destination').value.trim();if(!dest){showErr('Please enter a destination.');return}}
-
-  // Validate dates
+  if(mode==='multi'){
+    cities=Array.from(document.querySelectorAll('#cities-list input')).map(i=>i.value.trim()).filter(Boolean);
+    if(cities.length<2){showErr('Please enter at least 2 cities for a multi-city trip.');return;}
+    dest=cities.join(' to ');
+  } else {
+    dest=document.getElementById('destination').value.trim();
+    if(!dest){showErr('Please enter a destination — where are you heading?');return;}
+  }
   const startDate=document.getElementById('date-start').value;
   const endDate=document.getElementById('date-end').value;
-  if(!startDate||!endDate){showErr('Please select your travel dates.');return}
-  if(new Date(endDate)<=new Date(startDate)){showErr('End date must be after start date.');return}
+  if(!startDate||!endDate){showErr('Please pick your travel dates using the calendar above.');return;}
+  if(new Date(endDate)<=new Date(startDate)){showErr('Your end date needs to be after your start date.');return;}
 
   const days=getTripDays();
   const budget=parseInt(document.getElementById('budget').value);
@@ -1075,13 +1108,28 @@ async function generateItinerary(){
     document.getElementById('results-dest').textContent=dest+' · '+new Date(startDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+new Date(endDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     document.getElementById('results').className='results visible';
     document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
-  }catch(err){showErr(err.message||'Something went wrong. Please try again.')}
+  }catch(err){showErr(getFriendlyError(err.message));}
   stopLoadingAnim();
   document.getElementById('gen-btn').disabled=false;
   document.getElementById('loading').className='loading-card';
 }
 
-function showErr(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.className='error-msg visible'}
+function showErr(msg){
+  const el=document.getElementById('error-msg');
+  el.textContent=msg;
+  el.className='error-msg visible';
+  el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function getFriendlyError(err){
+  const msg=(err||'').toLowerCase();
+  if(msg.includes('destination')||msg.includes('city')) return 'Please enter a destination before planning your trip.';
+  if(msg.includes('date')) return 'Please choose your travel dates using the calendar.';
+  if(msg.includes('api')||msg.includes('key')||msg.includes('auth')) return 'There was an issue connecting to the AI. Please try again in a moment.';
+  if(msg.includes('quota')||msg.includes('limit')) return 'The AI is a little busy right now. Please wait a moment and try again.';
+  if(msg.includes('network')||msg.includes('fetch')) return 'Could not connect. Please check your internet and try again.';
+  return 'Something went wrong. Please try again.';
+}
 
 function resetForm(){
   document.getElementById('destination').value='';document.getElementById('days').value='5';document.getElementById('budget').value='200';updateBudgetLabel();document.getElementById('notes').value='';document.getElementById('results').className='results';document.getElementById('error-msg').className='error-msg';document.querySelectorAll('.vibe-btn').forEach(b=>b.classList.remove('selected'));document.querySelectorAll('.vibe-btn')[2].classList.add('selected');selectedVibe='Cultural';allText='';window.scrollTo({top:0,behavior:'smooth'});
