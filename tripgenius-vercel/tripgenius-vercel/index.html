@@ -24,6 +24,7 @@ body::after{content:'';position:fixed;bottom:-20%;right:-5%;width:50vw;height:50
 
 /* NAV */
 nav{padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.85)}
+body.light nav{background:rgba(248,248,252,0.9)}
 .logo{font-family:var(--font-d);font-size:1.35rem;font-weight:700;letter-spacing:-0.02em;color:var(--text);text-decoration:none;cursor:pointer}
 .logo span{color:var(--accent)}
 .nav-right{display:flex;align-items:center;gap:12px}
@@ -125,7 +126,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .vibe-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 8px;font-family:var(--font-b);font-size:13px;color:var(--text-muted);cursor:pointer;text-align:center;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px}
 .vibe-btn .vi{font-size:18px}
 .vibe-btn:hover{border-color:var(--border-hover);color:var(--text)}
-.vibe-btn.selected{border-color:var(--accent);background:rgba(123,110,246,0.12);color:var(--text)}
+.vibe-btn.selected,.vibe-btn.now-selected{border-color:var(--accent);background:rgba(123,110,246,0.12);color:var(--text)}
 .cities-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
 .city-row{display:flex;gap:8px}
 .city-row input{flex:1}
@@ -148,8 +149,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .now-sub{font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;line-height:1.6}
 .now-generate-btn{width:100%;padding:14px;background:rgba(94,234,212,0.12);border:1px solid rgba(94,234,212,0.3);border-radius:12px;font-family:var(--font-b);font-size:14px;font-weight:500;color:var(--accent2);cursor:pointer;transition:all 0.2s}
 .now-generate-btn:hover{background:rgba(94,234,212,0.2)}
-.now-result{background:var(--surface2);border-radius:12px;padding:1.25rem;margin-top:1rem;font-size:14px;line-height:1.8;color:var(--text-muted);white-space:pre-wrap;display:none}
-.now-result.visible{display:block}
+.now-result{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-top:1rem;font-size:14px;line-height:1.8;color:var(--text-muted);white-space:pre-wrap;display:none}
+.now-result.visible{display:block;animation:fadeUp 0.4s ease both}
 
 /* Error/loading */
 .error-msg{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:10px;padding:12px 16px;font-size:13px;color:#f87171;margin-top:1rem;display:none}
@@ -330,7 +331,13 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--text-dim);borde
 <body>
 <div class="page">
 
-<!-- SPLASH -->
+<nav>
+  <a class="logo" onclick="showLanding()">Trip<span>Genius</span></a>
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">☀️</button>
+    <button class="nav-btn nav-btn-ghost" onclick="showApp('saved')">Saved trips</button>
+    <button class="nav-btn nav-btn-accent" onclick="showApp('planner')">Plan a trip</button>
+  </div>
 </nav>
 
 <!-- SHARE MODAL -->
@@ -644,33 +651,58 @@ footer{text-align:center;padding:2rem;font-size:12px;color:var(--text-dim);borde
 
     <!-- NOW MODE TAB -->
     <div class="tab-panel" id="panel-nowmode">
-      <div class="now-card">
-        <div class="now-title">I am already there</div>
-        <div class="now-sub">Already at your destination and not sure what to do right now? Tell us where you are and we will give you instant real-time recommendations.</div>
-        <div class="form-row" style="margin-bottom:14px">
+      <div class="form-card">
+        <div class="form-section-label">Where are you right now?</div>
+        <div class="form-row">
           <div class="form-group">
-            <label>Where are you right now?</label>
+            <label>Current location</label>
             <input type="text" id="now-location" placeholder="e.g. Shibuya, Tokyo"/>
           </div>
           <div class="form-group">
-            <label>What time is it there?</label>
+            <label>Current time there</label>
             <input type="text" id="now-time" placeholder="e.g. 2:30 PM"/>
           </div>
         </div>
-        <div class="form-row" style="margin-bottom:14px">
+
+        <div class="form-section-label">Budget</div>
+        <div class="form-row">
           <div class="form-group">
             <label>Daily budget (USD)</label>
-            <input type="number" id="now-budget" placeholder="150" value="150"/>
+            <div class="slider-row">
+              <input type="range" id="now-budget-slider" min="50" max="1000" step="50" value="150" oninput="document.getElementById('now-budget-val').textContent='$'+this.value+'/day'"/>
+              <span class="slider-val" id="now-budget-val">$150/day</span>
+            </div>
           </div>
           <div class="form-group">
             <label>Spent today so far ($)</label>
             <input type="number" id="now-spent" placeholder="0" value="0"/>
           </div>
         </div>
-        <button class="now-generate-btn" id="now-btn" onclick="generateNow()">Tell me what to do right now</button>
-        <div class="error-msg" id="now-error"></div>
-        <div class="now-result" id="now-result"></div>
+
+        <div class="form-section-label">Travel vibe</div>
+        <div class="vibe-grid">
+          <button class="vibe-btn" onclick="selVibeNow(this,'Relaxed')"><span class="vi">🌊</span>Relaxed</button>
+          <button class="vibe-btn" onclick="selVibeNow(this,'Adventure')"><span class="vi">🧗</span>Adventure</button>
+          <button class="vibe-btn now-selected" onclick="selVibeNow(this,'Cultural')"><span class="vi">🏛️</span>Cultural</button>
+          <button class="vibe-btn" onclick="selVibeNow(this,'Foodie')"><span class="vi">🍜</span>Foodie</button>
+        </div>
+
+        <div class="form-section-label" style="margin-top:1.75rem">Extra preferences</div>
+        <div class="form-group">
+          <label>Anything else? (optional)</label>
+          <textarea id="now-notes" placeholder="e.g. vegetarian, on a tight budget, looking for something quiet..."></textarea>
+        </div>
       </div>
+
+      <button class="generate-btn" id="now-btn" onclick="generateNow()">Tell me what to do right now</button>
+      <div class="error-msg" id="now-error"></div>
+
+      <div class="loading-card" id="now-loading">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+        <div style="font-size:14px;color:var(--text-muted)">Finding the best things to do right now...</div>
+      </div>
+
+      <div class="now-result" id="now-result"></div>
     </div>
 
     <!-- SAVED TAB -->
@@ -757,12 +789,18 @@ function switchTab(t){
 }
 
 // Theme
-let isLight=false;
-function toggleTheme(){
-  isLight=!isLight;
-  document.body.className=isLight?'light':'';
-  document.querySelector('.theme-toggle').textContent=isLight?'🌙':'☀️';
+let isLight = localStorage.getItem('tg_theme') === 'light';
+function applyTheme(){
+  document.body.className = isLight ? 'light' : '';
+  const btn = document.querySelector('.theme-toggle');
+  if(btn) btn.textContent = isLight ? '🌙' : '☀️';
 }
+function toggleTheme(){
+  isLight = !isLight;
+  localStorage.setItem('tg_theme', isLight ? 'light' : 'dark');
+  applyTheme();
+}
+applyTheme();
 
 // Overlay
 function openOverlay(id){document.getElementById(id).className='overlay visible'}
@@ -825,7 +863,6 @@ function loadSample(dest,days,vibe){
 }
 
 // Budget tracker
-let totalBudget=0;
 function updateBudget(){
   const spent=Array.from(document.querySelectorAll('.day-spend-input')).reduce((s,i)=>s+(parseFloat(i.value)||0),0);
   const pct=Math.min((spent/totalBudget)*100,100);
@@ -994,22 +1031,36 @@ async function regenDay(n){
   btn.disabled=false;btn.textContent='Regenerate day';
 }
 
+let selectedVibeNow='Cultural';
+function selVibeNow(el,v){
+  document.querySelectorAll('#panel-nowmode .vibe-btn').forEach(b=>b.classList.remove('now-selected','selected'));
+  el.classList.add('now-selected');
+  selectedVibeNow=v;
+}
+
 // Now mode
 async function generateNow(){
   const loc=document.getElementById('now-location').value.trim();
   const time=document.getElementById('now-time').value.trim();
-  const budget=document.getElementById('now-budget').value;
+  const budget=document.getElementById('now-budget-slider').value;
   const spent=document.getElementById('now-spent').value;
+  const notes=document.getElementById('now-notes').value.trim();
   const errEl=document.getElementById('now-error');
   errEl.className='error-msg';
-  if(!loc){errEl.textContent='Please enter your current location.';errEl.className='error-msg visible';return}
-  const btn=document.getElementById('now-btn');btn.disabled=true;btn.textContent='Finding what to do...';
+  if(!loc){errEl.textContent='Please enter where you are right now.';errEl.className='error-msg visible';return;}
+  const btn=document.getElementById('now-btn');
+  btn.disabled=true;
+  document.getElementById('now-loading').className='loading-card visible';
+  document.getElementById('now-result').className='now-result';
   try{
-    const r=await fetch('/.netlify/functions/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:loc,mode:'nowmode',currentLocation:loc,currentTime:time||'Now',budget,spentSoFar:spent})});
+    const r=await fetch('/.netlify/functions/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:loc,mode:'nowmode',currentLocation:loc,currentTime:time||'Now',budget,spentSoFar:spent,vibe:selectedVibeNow,notes})});
     const d=await r.json();if(!r.ok)throw new Error(d.error||'Error');
-    const result=document.getElementById('now-result');result.textContent=d.text;result.className='now-result visible';
-  }catch(e){errEl.textContent=e.message||'Something went wrong.';errEl.className='error-msg visible'}
-  btn.disabled=false;btn.textContent='Tell me what to do right now';
+    const result=document.getElementById('now-result');
+    result.textContent=d.text;
+    result.className='now-result visible';
+  }catch(e){errEl.textContent=getFriendlyError(e.message);errEl.className='error-msg visible';}
+  btn.disabled=false;
+  document.getElementById('now-loading').className='loading-card';
 }
 
 // Main generate
