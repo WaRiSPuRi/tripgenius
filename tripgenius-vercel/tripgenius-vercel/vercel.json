@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/.netlify/functions/generate", "destination": "/api/generate" },
+    { "source": "/.netlify/functions/send-email", "destination": "/api/send-email" }
+  ]
+}

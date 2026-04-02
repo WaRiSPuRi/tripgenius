@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="description" content="TripGenius — AI-powered travel planner that builds personalised day-by-day itineraries with real picks, honest warnings, maps, weather and more."/>
+<title>TripGenius — AI Trip Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--surface3:#222233;
+  --border:rgba(255,255,255,0.07);--border-hover:rgba(255,255,255,0.16);
+  --accent:#7b6ef6;--accent2:#5eead4;--accent3:#f472b6;--warning:#f59e0b;
+  --text:#f0f0f8;--text-muted:#8888aa;--text-dim:#444460;
+  --r:16px;--font-d:'Playfair Display',Georgia,serif;--font-b:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-weight:300;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-30%;left:-10%;width:70vw;height:70vw;background:radial-gradient(circle,rgba(123,110,246,0.07) 0%,transparent 65%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-20%;right:-5%;width:50vw;height:50vw;background:radial-gradient(circle,rgba(94,234,212,0.05) 0%,transparent 65%);pointer-events:none;z-index:0}
+.page{position:relative;z-index:1}
+
+/* NAV */
+nav{padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.85)}
+.logo{font-family:var(--font-d);font-size:1.35rem;font-weight:700;letter-spacing:-0.02em;color:var(--text);text-decoration:none;cursor:pointer}
+.logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-btn{padding:7px 16px;border-radius:20px;font-family:var(--font-b);font-size:12px;font-weight:500;cursor:pointer;transition:all 0.2s;border:1px solid var(--border)}
+.nav-btn-ghost{background:transparent;color:var(--text-muted)}
+.nav-btn-ghost:hover{border-color:var(--border-hover);color:var(--text)}
+.nav-btn-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.nav-btn-accent:hover{background:#6a5de0}
+
+/* LANDING */
+.landing{display:block}
+.landing-hidden{display:none}
+
+/* Hero */
+.hero-section{text-align:center;padding:6rem 2rem 4rem;max-width:800px;margin:0 auto;animation:fadeUp 0.8s ease both}
+.hero-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(123,110,246,0.1);border:1px solid rgba(123,110,246,0.25);border-radius:30px;padding:6px 16px;font-size:12px;font-weight:500;color:var(--accent);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1.5rem}
+.hero-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero-section h1{font-family:var(--font-d);font-size:clamp(2.4rem,6vw,4rem);font-weight:700;line-height:1.1;letter-spacing:-0.03em;margin-bottom:1.25rem}
+.hero-section h1 em{font-style:italic;color:var(--accent)}
+.hero-section h1 .h1-line2{color:var(--text-muted);font-weight:400}
+.hero-desc{font-size:1.1rem;color:var(--text-muted);line-height:1.75;max-width:540px;margin:0 auto 2.5rem}
+.hero-cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:3rem}
+.cta-primary{padding:14px 32px;background:var(--accent);border:none;border-radius:12px;font-family:var(--font-b);font-size:15px;font-weight:500;color:#fff;cursor:pointer;transition:all 0.2s}
+.cta-primary:hover{background:#6a5de0;transform:translateY(-2px)}
+.cta-secondary{padding:14px 24px;background:transparent;border:1px solid var(--border-hover);border-radius:12px;font-family:var(--font-b);font-size:15px;font-weight:400;color:var(--text-muted);cursor:pointer;transition:all 0.2s}
+.cta-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.hero-stats{display:flex;gap:2rem;justify-content:center;flex-wrap:wrap}
+.hero-stat{text-align:center}
+.hero-stat-num{font-family:var(--font-d);font-size:1.6rem;font-weight:600;color:var(--text)}
+.hero-stat-label{font-size:12px;color:var(--text-muted);margin-top:2px}
+
+/* Features grid */
+.features-section{max-width:1000px;margin:0 auto;padding:4rem 2rem}
+.section-eyebrow{text-align:center;font-size:11px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem}
+.section-title{text-align:center;font-family:var(--font-d);font-size:clamp(1.6rem,4vw,2.4rem);font-weight:600;letter-spacing:-0.02em;margin-bottom:3rem}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;transition:border-color 0.2s}
+.feature-card:hover{border-color:var(--border-hover)}
+.feature-icon{font-size:24px;margin-bottom:1rem}
+.feature-title{font-size:15px;font-weight:500;margin-bottom:6px;color:var(--text)}
+.feature-desc{font-size:13px;color:var(--text-muted);line-height:1.6}
+
+/* Sample trips */
+.samples-section{max-width:1000px;margin:0 auto;padding:2rem 2rem 4rem}
+.samples-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sample-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all 0.2s}
+.sample-card:hover{border-color:var(--accent);transform:translateY(-3px)}
+.sample-img{width:100%;height:160px;object-fit:cover;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:40px}
+.sample-body{padding:1.25rem}
+.sample-dest{font-family:var(--font-d);font-size:1.1rem;font-weight:600;margin-bottom:4px}
+.sample-meta{font-size:12px;color:var(--text-muted);margin-bottom:10px}
+.sample-preview{font-size:12px;color:var(--text-muted);line-height:1.6;border-top:1px solid var(--border);padding-top:10px}
+.sample-btn{margin-top:10px;width:100%;padding:8px;background:rgba(123,110,246,0.1);border:1px solid rgba(123,110,246,0.25);border-radius:8px;font-family:var(--font-b);font-size:12px;color:var(--accent);cursor:pointer;transition:all 0.2s}
+.sample-btn:hover{background:rgba(123,110,246,0.2)}
+
+/* Testimonials */
+.testimonials-section{max-width:900px;margin:0 auto;padding:2rem 2rem 5rem}
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.testimonial-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem}
+.testimonial-stars{color:var(--warning);font-size:14px;margin-bottom:10px}
+.testimonial-text{font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:12px;font-style:italic}
+.testimonial-author{font-size:12px;font-weight:500;color:var(--text)}
+.testimonial-loc{font-size:11px;color:var(--text-dim)}
+
+/* APP VIEW */
+.app-view{display:none}
+.app-view.visible{display:block}
+.app-container{max-width:820px;margin:0 auto;padding:0 1.5rem 4rem;animation:fadeUp 0.5s ease both}
+
+/* Tabs */
+.app-tabs{display:flex;gap:8px;margin:1.5rem 0;border-bottom:1px solid var(--border);padding-bottom:0}
+.app-tab{padding:10px 18px;font-family:var(--font-b);font-size:13px;font-weight:400;color:var(--text-muted);cursor:pointer;border:none;background:transparent;border-bottom:2px solid transparent;transition:all 0.2s;margin-bottom:-1px}
+.app-tab:hover{color:var(--text)}
+.app-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+
+/* Tab panels */
+.tab-panel{display:none}
+.tab-panel.active{display:block;animation:fadeUp 0.3s ease both}
+
+/* Form */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;margin-bottom:1.5rem}
+.form-section-label{font-size:11px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem;margin-top:1.75rem}
+.form-section-label:first-child{margin-top:0}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{display:flex;flex-direction:column;gap:7px}
+label{font-size:13px;font-weight:400;color:var(--text-muted)}
+input[type=text],input[type=number],input[type=email],textarea,select{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:var(--font-b);font-size:14px;color:var(--text);outline:none;transition:border-color 0.2s,background 0.2s;width:100%}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);background:rgba(123,110,246,0.05)}
+input::placeholder,textarea::placeholder{color:var(--text-dim)}
+textarea{resize:none;height:80px;line-height:1.6}
+select option{background:var(--surface2)}
+.slider-row{display:flex;align-items:center;gap:12px}
+input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--surface2);border-radius:2px;border:none;padding:0;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);cursor:pointer;transition:transform 0.15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.slider-val{font-size:14px;font-weight:500;color:var(--accent);min-width:60px;text-align:right}
+.vibe-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.vibe-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 8px;font-family:var(--font-b);font-size:13px;color:var(--text-muted);cursor:pointer;text-align:center;transition:all 0.2s;display:flex;flex-direction:column;align-items:center;gap:5px}
+.vibe-btn .vi{font-size:18px}
+.vibe-btn:hover{border-color:var(--border-hover);color:var(--text)}
+.vibe-btn.selected{border-color:var(--accent);background:rgba(123,110,246,0.12);color:var(--text)}
+.cities-list{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.city-row{display:flex;gap:8px}
+.city-row input{flex:1}
+.city-remove{background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text-muted);cursor:pointer;font-size:14px;flex-shrink:0}
+.city-remove:hover{border-color:#f87171;color:#f87171}
+.add-city-btn{background:transparent;border:1px dashed var(--border);border-radius:10px;padding:10px;font-family:var(--font-b);font-size:13px;color:var(--text-muted);cursor:pointer;width:100%;transition:all 0.2s}
+.add-city-btn:hover{border-color:var(--accent);color:var(--accent)}
+.group-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.group-toggle{padding:10px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-family:var(--font-b);font-size:13px;color:var(--text-muted);cursor:pointer;transition:all 0.2s}
+.group-toggle.on{border-color:var(--accent);color:var(--accent);background:rgba(123,110,246,0.1)}
+.group-extra{display:none;align-items:center;gap:8px}
+.group-extra.visible{display:flex}
+.generate-btn{width:100%;padding:15px;background:var(--accent);border:none;border-radius:12px;font-family:var(--font-b);font-size:15px;font-weight:500;color:#fff;cursor:pointer;transition:all 0.2s}
+.generate-btn:hover{background:#6a5de0;transform:translateY(-1px)}
+.generate-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+/* Now mode */
+.now-card{background:var(--surface);border:1px solid rgba(94,234,212,0.2);border-radius:var(--r);padding:2rem;margin-bottom:1.5rem}
+.now-title{font-family:var(--font-d);font-size:1.2rem;font-weight:600;margin-bottom:0.5rem}
+.now-sub{font-size:13px;color:var(--text-muted);margin-bottom:1.5rem;line-height:1.6}
+.now-generate-btn{width:100%;padding:14px;background:rgba(94,234,212,0.12);border:1px solid rgba(94,234,212,0.3);border-radius:12px;font-family:var(--font-b);font-size:14px;font-weight:500;color:var(--accent2);cursor:pointer;transition:all 0.2s}
+.now-generate-btn:hover{background:rgba(94,234,212,0.2)}
+.now-result{background:var(--surface2);border-radius:12px;padding:1.25rem;margin-top:1rem;font-size:14px;line-height:1.8;color:var(--text-muted);white-space:pre-wrap;display:none}
+.now-result.visible{display:block}
+
+/* Error/loading */
+.error-msg{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:10px;padding:12px 16px;font-size:13px;color:#f87171;margin-top:1rem;display:none}
+.error-msg.visible{display:block}
+.loading-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2.5rem;text-align:center;display:none;margin-top:1.5rem}
+.loading-card.visible{display:block}
+.loading-dots{display:flex;justify-content:center;gap:8px;margin-bottom:1rem}
+.loading-dots span{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s infinite}
+.loading-dots span:nth-child(2){animation-delay:0.2s;background:var(--accent2)}
+.loading-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes pulse{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.loading-steps{display:flex;flex-direction:column;gap:6px;margin-top:1rem}
+.loading-step{font-size:13px;color:var(--text-dim);transition:color 0.3s}
+.loading-step.active{color:var(--accent2)}
+.loading-step.done{color:var(--text-dim)}
+
+/* Results */
+.results{display:none;margin-top:1.5rem}
+.results.visible{display:block;animation:fadeUp 0.5s ease both}
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px}
+.results-title{font-family:var(--font-d);font-size:1.4rem;font-weight:600}
+.results-dest{font-size:13px;color:var(--accent2);border:1px solid rgba(94,234,212,0.25);padding:4px 12px;border-radius:20px}
+.img-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:1rem;border-radius:var(--r);overflow:hidden}
+.img-gallery img{width:100%;height:130px;object-fit:cover;cursor:pointer;transition:transform 0.2s}
+.img-gallery img:hover{transform:scale(1.04)}
+.img-gallery img:first-child{grid-column:span 2;height:190px}
+.img-credit{font-size:11px;color:var(--text-dim);margin-bottom:1rem}
+.img-credit a{color:var(--text-dim);text-decoration:underline}
+.weather-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem;display:none}
+.weather-card.visible{display:block}
+.section-label-sm{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:1rem}
+.weather-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.weather-day{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center;min-width:78px;flex-shrink:0}
+.weather-day-name{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.weather-icon{font-size:18px;margin-bottom:4px}
+.weather-temp{font-size:14px;font-weight:500}
+.weather-desc{font-size:10px;color:var(--text-dim);margin-top:2px;text-transform:capitalize}
+.search-links{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
+.search-links-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sl-btn{display:block;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;text-decoration:none;text-align:center;transition:all 0.2s}
+.sl-btn:hover{border-color:var(--border-hover)}
+.sl-name{font-size:13px;font-weight:500;color:var(--text);display:block}
+.sl-type{font-size:11px;color:var(--text-muted);display:block;margin-top:2px}
+.map-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:1rem}
+.map-header{padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between}
+.map-day-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-family:var(--font-b);font-size:12px;color:var(--text);outline:none;cursor:pointer}
+#map-frame{width:100%;height:260px;border:none;display:block}
+.budget-tracker{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem;margin-bottom:1rem}
+.budget-tracker-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.budget-tracker-title{font-size:13px;font-weight:500}
+.budget-total{font-size:13px;color:var(--text-muted)}
+.budget-bar-wrap{background:var(--surface2);border-radius:4px;height:6px;margin-bottom:10px;overflow:hidden}
+.budget-bar{height:100%;border-radius:4px;background:var(--accent2);transition:width 0.4s ease}
+.budget-bar.over{background:#f87171}
+.budget-stats{display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted)}
+.budget-spent{color:var(--accent2);font-weight:500}
+.budget-spent.over{color:#f87171}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:12px;animation:fadeUp 0.4s ease both}
+.day-card:hover{border-color:var(--border-hover)}
+.day-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+.day-badge{font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);background:rgba(123,110,246,0.12);border:1px solid rgba(123,110,246,0.25);padding:4px 12px;border-radius:20px}
+.day-header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.day-cost-row{display:flex;align-items:center;gap:6px}
+.day-cost-row label{font-size:12px;color:var(--text-dim)}
+.day-cost-row input{width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 8px;font-family:var(--font-b);font-size:13px;color:var(--text);outline:none;text-align:right}
+.day-cost-row input:focus{border-color:var(--accent)}
+.regen-btn{padding:5px 10px;background:rgba(94,234,212,0.08);border:1px solid rgba(94,234,212,0.2);border-radius:8px;font-family:var(--font-b);font-size:11px;color:var(--accent2);cursor:pointer;white-space:nowrap}
+.regen-btn:hover{background:rgba(94,234,212,0.15)}
+.regen-btn:disabled{opacity:0.4;cursor:not-allowed}
+.day-content{font-size:14px;line-height:1.8;color:var(--text-muted);white-space:pre-wrap}
+.warning-block{background:rgba(245,158,11,0.08);border-left:3px solid var(--warning);border-radius:0 8px 8px 0;padding:10px 14px;margin:12px 0;font-size:13px;color:#fcd34d;line-height:1.6}
+.warning-block strong{color:var(--warning);display:block;margin-bottom:3px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase}
+.extra-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.5rem;margin-bottom:12px}
+.extra-content{font-size:14px;line-height:1.8;color:var(--text-muted);white-space:pre-wrap}
+.email-capture{background:var(--surface);border:1px solid rgba(123,110,246,0.2);border-radius:var(--r);padding:1.5rem;margin-bottom:1rem}
+.email-capture-title{font-size:14px;font-weight:500;margin-bottom:4px}
+.email-capture-sub{font-size:12px;color:var(--text-muted);margin-bottom:1rem}
+.email-row{display:flex;gap:8px}
+.email-row input{flex:1}
+.email-send-btn{padding:11px 18px;background:var(--accent);border:none;border-radius:10px;font-family:var(--font-b);font-size:13px;font-weight:500;color:#fff;cursor:pointer;white-space:nowrap;transition:all 0.2s}
+.email-send-btn:hover{background:#6a5de0}
+.email-sent{font-size:13px;color:var(--accent2);margin-top:8px;display:none}
+.email-sent.visible{display:block}
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1rem}
+.action-btn{padding:12px;border-radius:12px;font-family:var(--font-b);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;text-align:center;border:1px solid var(--border)}
+.btn-whatsapp{background:rgba(37,211,102,0.1);border-color:rgba(37,211,102,0.3);color:#25d366}
+.btn-whatsapp:hover{background:rgba(37,211,102,0.2)}
+.btn-save{background:rgba(94,234,212,0.08);border-color:rgba(94,234,212,0.25);color:var(--accent2)}
+.btn-save:hover{background:rgba(94,234,212,0.15)}
+.btn-pdf{background:rgba(123,110,246,0.1);border-color:rgba(123,110,246,0.3);color:var(--accent)}
+.btn-pdf:hover{background:rgba(123,110,246,0.2)}
+.btn-reset{background:transparent;color:var(--text-muted)}
+.btn-reset:hover{border-color:var(--border-hover);color:var(--text)}
+
+/* SPLASH SCREEN */
+
+.splash-logo{font-family:var(--font-d);font-size:2.6rem;font-weight:700;letter-spacing:-0.03em;color:var(--text)}
+.splash-logo span{color:var(--accent)}
+.splash-tagline{font-size:14px;color:var(--text-muted);letter-spacing:0.06em}
+.splash-bar-wrap{width:140px;height:2px;background:var(--surface2);border-radius:2px;overflow:hidden;margin-top:8px}
+.splash-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;animation:splashLoad 1.2s ease forwards}
+@keyframes splashLoad{0%{width:0%}60%{width:75%}100%{width:100%}}
+
+/* DATE PICKER */
+.date-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+input[type=date]{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:var(--font-b);font-size:14px;color:var(--text);outline:none;width:100%;transition:border-color 0.2s;color-scheme:dark}
+input[type=date]:focus{border-color:var(--accent)}
+body.light input[type=date]{color-scheme:light}
+.date-hint{font-size:12px;margin-top:6px;padding:6px 10px;border-radius:8px;display:none}
+.date-hint.visible{display:block}
+.date-hint.ok{background:rgba(94,234,212,0.08);color:var(--accent2);border:1px solid rgba(94,234,212,0.2)}
+.date-hint.warn{background:rgba(245,158,11,0.08);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)}
+
+/* Saved trips tab */
+.saved-empty{text-align:center;padding:3rem;color:var(--text-muted);font-size:14px}
+.saved-grid{display:flex;flex-direction:column;gap:10px}
+.saved-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.saved-item-title{font-size:15px;font-weight:500;color:var(--text)}
+.saved-item-meta{font-size:12px;color:var(--text-muted);margin-top:3px}
+.saved-item-btns{display:flex;gap:6px;flex-shrink:0}
+.saved-load{padding:7px 14px;background:rgba(123,110,246,0.12);border:1px solid rgba(123,110,246,0.3);border-radius:8px;font-family:var(--font-b);font-size:12px;color:var(--accent);cursor:pointer}
+.saved-del{padding:7px 12px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:8px;font-family:var(--font-b);font-size:12px;color:#f87171;cursor:pointer}
+
+/* Overlays */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.overlay.visible{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:2rem;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;animation:fadeUp 0.3s ease both}
+.modal h2{font-family:var(--font-d);font-size:1.35rem;font-weight:600;margin-bottom:0.4rem}
+.modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:1.5rem}
+.modal-actions{display:flex;gap:10px;margin-top:1.5rem}
+.modal-submit{flex:1;padding:12px;background:var(--accent);border:none;border-radius:10px;font-family:var(--font-b);font-size:14px;font-weight:500;color:#fff;cursor:pointer}
+.modal-submit:hover{background:#6a5de0}
+.modal-cancel{padding:12px 18px;background:transparent;border:1px solid var(--border);border-radius:10px;font-family:var(--font-b);font-size:14px;color:var(--text-muted);cursor:pointer}
+.quiz-q{margin-bottom:1.5rem}
+.quiz-q-label{font-size:13px;font-weight:500;margin-bottom:10px;display:block}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.quiz-opt{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:var(--font-b);font-size:13px;color:var(--text-muted);cursor:pointer;text-align:left;transition:all 0.2s}
+.quiz-opt:hover{border-color:var(--border-hover);color:var(--text)}
+.quiz-opt.selected{border-color:var(--accent);background:rgba(123,110,246,0.12);color:var(--text)}
+
+/* Dark/light toggle */
+.theme-toggle{background:transparent;border:1px solid var(--border);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:14px;color:var(--text-muted);transition:all 0.2s}
+.theme-toggle:hover{border-color:var(--border-hover)}
+body.light{--bg:#f8f8fc;--surface:#ffffff;--surface2:#f1f0f8;--surface3:#e8e6f5;--border:rgba(0,0,0,0.08);--border-hover:rgba(0,0,0,0.16);--text:#1a1a2e;--text-muted:#555577;--text-dim:#999ab0}
+
+/* Share modal */
+.share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.share-app-btn{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all 0.2s;text-decoration:none}
+.share-app-btn:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+.share-app-icon{font-size:24px}
+.share-app-name{font-size:11px;color:var(--text-muted);font-weight:500}
+.share-divider{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+.share-divider::before,.share-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.share-divider span{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em}
+.share-copy-row{display:flex;gap:8px}
+.share-copy-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:monospace;font-size:12px;color:var(--text-muted);outline:none}
+.share-copy-btn{padding:10px 16px;background:var(--accent);border:none;border-radius:10px;font-family:var(--font-b);font-size:13px;font-weight:500;color:#fff;cursor:pointer;white-space:nowrap;transition:all 0.2s}
+.share-copy-btn:hover{background:#6a5de0}
+.share-copy-btn.copied{background:var(--accent2);color:#0a0a0f}
+.share-full-toggle{width:100%;margin-top:1rem;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;font-family:var(--font-b);font-size:13px;color:var(--text-muted);cursor:pointer;transition:all 0.2s}
+.share-full-toggle:hover{border-color:var(--border-hover);color:var(--text)}
+
+/* Splash screen */
+.splash{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity 0.5s ease,visibility 0.5s ease}
+.splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.splash-logo{font-family:var(--font-d);font-size:2.2rem;font-weight:700;letter-spacing:-0.03em;color:var(--text)}
+.splash-logo span{color:var(--accent)}
+.splash-bar-wrap{width:160px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.splash-bar{height:100%;width:0%;background:var(--accent);border-radius:2px;animation:splashLoad 0.9s ease forwards}
+@keyframes splashLoad{0%{width:0%}60%{width:70%}100%{width:100%}}
+.splash-tagline{font-size:12px;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase}
+
+footer{text-align:center;padding:2rem;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);position:relative;z-index:1}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:700px){
+  nav{padding:1rem 1.25rem}
+  .features-grid,.samples-grid,.testimonials-grid{grid-template-columns:1fr}
+  .hero-section{padding:4rem 1.25rem 3rem}
+  .app-container{padding:0 1rem 3rem}
+  .form-card{padding:1.25rem}
+  .form-row{grid-template-columns:1fr}
+  .vibe-grid{grid-template-columns:repeat(2,1fr)}
+  .img-gallery{grid-template-columns:1fr 1fr}
+  .img-gallery img:first-child{grid-column:span 2}
+  .action-row{grid-template-columns:1fr}
+  .search-links-grid{grid-template-columns:1fr}
+  .hero-stats{gap:1.25rem}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+  <div class="splash-logo">Trip<span>Genius</span></div>
+  <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+  <div class="splash-tagline">AI-powered travel planning</div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" onclick="showLanding()">Trip<span>Genius</span></a>
+  <div class="nav-right">
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">☀️</button>
+    <button class="nav-btn nav-btn-ghost" onclick="showApp('saved')">Saved trips</button>
+    <button class="nav-btn nav-btn-accent" onclick="showApp('planner')">Plan a trip</button>
+  </div>
+</nav>
+
+<!-- SHARE MODAL -->
+<div class="overlay" id="share-overlay">
+  <div class="modal">
+    <h2>Share your itinerary</h2>
+    <p class="modal-sub">Share the full itinerary — every day, every detail — to any app.</p>
+    <div class="share-grid" id="share-grid"></div>
+    <div class="share-divider"><span>or copy text</span></div>
+    <div class="share-copy-row">
+      <input class="share-copy-input" id="share-copy-input" readonly placeholder="Generate an itinerary first"/>
+      <button class="share-copy-btn" id="share-copy-btn" onclick="copyItinerary()">Copy</button>
+    </div>
+    <button class="share-full-toggle" onclick="closeOverlay('share-overlay')">Close</button>
+  </div>
+</div>
+
+<!-- QUIZ MODAL -->
+<div class="overlay" id="quiz-overlay">
+  <div class="modal">
+    <h2>Travel personality quiz</h2>
+    <p class="modal-sub">5 questions to personalise your itinerary beyond just a vibe.</p>
+    <div class="quiz-q"><span class="quiz-q-label">1. What is your ideal travel pace?</span>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-q="pace" data-v="Slow and leisurely" onclick="selQ(this)">Slow and leisurely</button>
+        <button class="quiz-opt" data-q="pace" data-v="Balanced mix" onclick="selQ(this)">Balanced mix</button>
+        <button class="quiz-opt" data-q="pace" data-v="Pack as much in as possible" onclick="selQ(this)">Pack it all in</button>
+        <button class="quiz-opt" data-q="pace" data-v="Spontaneous" onclick="selQ(this)">Spontaneous</button>
+      </div>
+    </div>
+    <div class="quiz-q"><span class="quiz-q-label">2. Where do you prefer to stay?</span>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-q="accommodation" data-v="Budget hostel" onclick="selQ(this)">Hostel or budget</button>
+        <button class="quiz-opt" data-q="accommodation" data-v="Mid-range hotel or Airbnb" onclick="selQ(this)">Mid-range</button>
+        <button class="quiz-opt" data-q="accommodation" data-v="Boutique or luxury hotel" onclick="selQ(this)">Boutique or luxury</button>
+        <button class="quiz-opt" data-q="accommodation" data-v="Unique local experience" onclick="selQ(this)">Unique and local</button>
+      </div>
+    </div>
+    <div class="quiz-q"><span class="quiz-q-label">3. How adventurous is your eating?</span>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-q="food" data-v="Stick to familiar foods" onclick="selQ(this)">Stick to familiar</button>
+        <button class="quiz-opt" data-q="food" data-v="Try local dishes but nothing too wild" onclick="selQ(this)">Mostly local</button>
+        <button class="quiz-opt" data-q="food" data-v="Eat anything and everything local" onclick="selQ(this)">Eat everything</button>
+        <button class="quiz-opt" data-q="food" data-v="Street food and markets only" onclick="selQ(this)">Street food only</button>
+      </div>
+    </div>
+    <div class="quiz-q"><span class="quiz-q-label">4. How do you prefer to explore?</span>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-q="social" data-v="Solo and independent" onclick="selQ(this)">Solo explorer</button>
+        <button class="quiz-opt" data-q="social" data-v="Guided tours for key sights" onclick="selQ(this)">Guided tours</button>
+        <button class="quiz-opt" data-q="social" data-v="Mix of solo and meeting locals" onclick="selQ(this)">Mix it up</button>
+        <button class="quiz-opt" data-q="social" data-v="Always with a group or partner" onclick="selQ(this)">With others</button>
+      </div>
+    </div>
+    <div class="quiz-q"><span class="quiz-q-label">5. What matters most to you?</span>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-q="priority" data-v="Relaxation and recharging" onclick="selQ(this)">Relaxation</button>
+        <button class="quiz-opt" data-q="priority" data-v="Learning history and culture" onclick="selQ(this)">Culture and history</button>
+        <button class="quiz-opt" data-q="priority" data-v="Thrill and adventure" onclick="selQ(this)">Adventure</button>
+        <button class="quiz-opt" data-q="priority" data-v="Food drink and nightlife" onclick="selQ(this)">Food and nightlife</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeOverlay('quiz-overlay')">Cancel</button>
+      <button class="modal-submit" onclick="submitQuiz()">Save my profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- LANDING -->
+<div class="landing" id="landing">
+  <div class="hero-section">
+    <div class="hero-pill">AI-powered travel planning</div>
+    <h1>Stop getting <em>generic</em> itineraries.<br/><span class="h1-line2">Start travelling like a local.</span></h1>
+    <p class="hero-desc">TripGenius builds personalised day-by-day itineraries with real restaurant picks, honest warnings most apps hide, live weather, maps, and a budget tracker — all powered by AI.</p>
+    <div class="hero-cta-row">
+      <button class="cta-primary" onclick="showApp('planner')">Plan my trip free</button>
+      <button class="cta-secondary" onclick="document.getElementById('samples-section').scrollIntoView({behavior:'smooth'})">See sample itineraries</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="hero-stat-num">10+</div><div class="hero-stat-label">Features built in</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">Free</div><div class="hero-stat-label">No credit card needed</div></div>
+      <div class="hero-stat"><div class="hero-stat-num">14K+</div><div class="hero-stat-label">Itineraries per day possible</div></div>
+    </div>
+  </div>
+
+  <div class="features-section">
+    <div class="section-eyebrow">Everything included</div>
+    <div class="section-title">Not your average trip planner</div>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">🧠</div><div class="feature-title">Personality quiz</div><div class="feature-desc">5 questions that personalise every recommendation beyond just picking a vibe.</div></div>
+      <div class="feature-card"><div class="feature-icon">⚠️</div><div class="feature-title">Honest warnings</div><div class="feature-desc">We tell you what tourist traps to avoid, what is overpriced, and what locals actually do.</div></div>
+      <div class="feature-card"><div class="feature-icon">🗺️</div><div class="feature-title">Interactive map</div><div class="feature-desc">Every day's locations pinned on a live map so you can see your actual route.</div></div>
+      <div class="feature-card"><div class="feature-icon">🌡️</div><div class="feature-title">Weather forecast</div><div class="feature-desc">7-day forecast for your destination so you can pack the right things.</div></div>
+      <div class="feature-card"><div class="feature-icon">💸</div><div class="feature-title">Budget tracker</div><div class="feature-desc">Log what you spend each day and track against your budget in real time.</div></div>
+      <div class="feature-card"><div class="feature-icon">🔄</div><div class="feature-title">Regenerate any day</div><div class="feature-desc">Don't like Day 3? Regenerate just that day without redoing the whole trip.</div></div>
+      <div class="feature-card"><div class="feature-icon">🌍</div><div class="feature-title">Multi-city trips</div><div class="feature-desc">Plan a trip across multiple cities in one go. Paris to Amsterdam to Berlin? Done.</div></div>
+      <div class="feature-card"><div class="feature-icon">📍</div><div class="feature-title">I am already there</div><div class="feature-desc">Tell us where you are right now and get instant recommendations for this moment.</div></div>
+      <div class="feature-card"><div class="feature-icon">📄</div><div class="feature-title">PDF and WhatsApp export</div><div class="feature-desc">Download your itinerary as a PDF or share it straight to WhatsApp.</div></div>
+      <div class="feature-card"><div class="feature-icon">🧳</div><div class="feature-title">Packing list</div><div class="feature-desc">AI generates a personalised packing list based on your destination and activities.</div></div>
+      <div class="feature-card"><div class="feature-icon">🗣️</div><div class="feature-title">Language phrasebook</div><div class="feature-desc">10 essential local phrases with pronunciation so you can talk to real locals.</div></div>
+      <div class="feature-card"><div class="feature-icon">⭐</div><div class="feature-title">Save and revisit</div><div class="feature-desc">Save your favourite itineraries and come back to them any time.</div></div>
+    </div>
+  </div>
+
+  <div class="samples-section" id="samples-section">
+    <div class="section-eyebrow">Sample itineraries</div>
+    <div class="section-title">See the quality for yourself</div>
+    <div class="samples-grid">
+      <div class="sample-card" onclick="loadSample('Tokyo, Japan','5','Cultural')">
+        <div class="sample-img">🗼</div>
+        <div class="sample-body">
+          <div class="sample-dest">Tokyo, Japan</div>
+          <div class="sample-meta">5 days · $150/day · Cultural</div>
+          <div class="sample-preview">Day 1: Start at Senso-ji temple at 7am before crowds arrive. Honest warning: skip the tourist rickshaws — they charge 10x the value...</div>
+          <button class="sample-btn">Plan this trip</button>
+        </div>
+      </div>
+      <div class="sample-card" onclick="loadSample('Paris, France','4','Foodie')">
+        <div class="sample-img">🗼</div>
+        <div class="sample-body">
+          <div class="sample-dest">Paris, France</div>
+          <div class="sample-meta">4 days · $200/day · Foodie</div>
+          <div class="sample-preview">Day 1: Skip the Eiffel Tower queue on Day 1. Instead hit Marché d'Aligre for a real Parisian breakfast with locals...</div>
+          <button class="sample-btn">Plan this trip</button>
+        </div>
+      </div>
+      <div class="sample-card" onclick="loadSample('New York, USA','3','Adventure')">
+        <div class="sample-img">🗽</div>
+        <div class="sample-body">
+          <div class="sample-dest">New York, USA</div>
+          <div class="sample-meta">3 days · $250/day · Adventure</div>
+          <div class="sample-preview">Day 1: Hit the High Line at 6am for zero crowds and great light. Honest warning: Times Square restaurants are all overpriced tourist traps...</div>
+          <button class="sample-btn">Plan this trip</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="testimonials-section">
+    <div class="section-eyebrow">What travellers say</div>
+    <div class="section-title">Built for real trips</div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <div class="testimonial-text">"The honest warnings alone saved us from three tourist traps in Bangkok. Every other app just tells you the same generic stuff."</div>
+        <div class="testimonial-author">Sarah M.</div>
+        <div class="testimonial-loc">Travelled to Bangkok, Thailand</div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <div class="testimonial-text">"The multi-city feature is incredible. Planned our entire Europe trip in 10 minutes. The budget tracker kept us from going broke."</div>
+        <div class="testimonial-author">James K.</div>
+        <div class="testimonial-loc">Travelled through 4 European cities</div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <div class="testimonial-text">"The 'I am already there' feature is a game changer. Used it on a rainy afternoon in Tokyo and found an amazing jazz bar we never would have discovered."</div>
+        <div class="testimonial-author">Priya L.</div>
+        <div class="testimonial-loc">Travelled to Tokyo, Japan</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP VIEW -->
+<div class="app-view" id="app-view">
+  <div class="app-container">
+    <div class="app-tabs">
+      <button class="app-tab active" id="tab-planner" onclick="switchTab('planner')">Plan a trip</button>
+      <button class="app-tab" id="tab-nowmode" onclick="switchTab('nowmode')">I am already there</button>
+      <button class="app-tab" id="tab-saved" onclick="switchTab('saved')">Saved trips</button>
+    </div>
+
+    <!-- PLANNER TAB -->
+    <div class="tab-panel active" id="panel-planner">
+      <div class="form-card">
+        <div class="form-section-label">Trip type</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Mode</label>
+            <select id="trip-mode" onchange="toggleMode()">
+              <option value="single">Single destination</option>
+              <option value="multi">Multi-city trip</option>
+            </select>
+          </div>
+        </div>
+        <div class="date-row">
+          <div class="form-group">
+            <label>Start date</label>
+            <input type="date" id="date-start" onchange="onDateChange()"/>
+          </div>
+          <div class="form-group">
+            <label>End date</label>
+            <input type="date" id="date-end" onchange="onDateChange()"/>
+          </div>
+        </div>
+        <div class="date-hint" id="date-hint"></div>
+        <div id="single-dest" style="margin-top:14px">
+          <div class="form-group">
+            <label>Destination</label>
+            <input type="text" id="destination" placeholder="e.g. Tokyo, Japan"/>
+          </div>
+        </div>
+        <div id="multi-dest" style="display:none;margin-top:14px">
+          <label style="font-size:13px;color:var(--text-muted);margin-bottom:8px;display:block">Cities in order</label>
+          <div class="cities-list" id="cities-list">
+            <div class="city-row"><input type="text" placeholder="City 1 e.g. Paris, France"/></div>
+            <div class="city-row"><input type="text" placeholder="City 2 e.g. Amsterdam, Netherlands"/></div>
+          </div>
+          <button class="add-city-btn" onclick="addCity()">+ Add another city</button>
+        </div>
+        <div class="form-section-label">Budget and group</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Daily budget (USD)</label>
+            <div class="slider-row">
+              <input type="range" id="budget" min="50" max="1000" step="50" value="200" oninput="updateBudgetLabel()"/>
+              <span class="slider-val" id="budget-val">$200/day</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Group</label>
+            <div class="group-row">
+              <button class="group-toggle" id="group-toggle" onclick="toggleGroup()">Solo</button>
+              <div class="group-extra" id="group-extra">
+                <input type="number" id="group-size" value="2" min="2" max="20" style="width:65px" oninput="updateBudgetLabel()"/>
+                <span style="font-size:13px;color:var(--text-muted)">people</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-section-label">Travel vibe</div>
+        <div class="vibe-grid">
+          <button class="vibe-btn" onclick="selVibe(this,'Relaxed')"><span class="vi">🌊</span>Relaxed</button>
+          <button class="vibe-btn" onclick="selVibe(this,'Adventure')"><span class="vi">🧗</span>Adventure</button>
+          <button class="vibe-btn selected" onclick="selVibe(this,'Cultural')"><span class="vi">🏛️</span>Cultural</button>
+          <button class="vibe-btn" onclick="selVibe(this,'Foodie')"><span class="vi">🍜</span>Foodie</button>
+        </div>
+        <div style="margin-top:1rem;text-align:center">
+          <button class="quiz-opt" id="quiz-badge" style="border-radius:20px;padding:8px 18px;font-size:12px" onclick="openOverlay('quiz-overlay')">+ Add personality quiz for better results</button>
+        </div>
+        <div class="form-section-label" style="margin-top:1.5rem">Extra preferences</div>
+        <div class="form-group">
+          <label>Anything else? (optional)</label>
+          <textarea id="notes" placeholder="e.g. vegetarian, with kids, love street markets, no museums..."></textarea>
+        </div>
+      </div>
+      <button class="generate-btn" id="gen-btn" onclick="generateItinerary()">Plan my trip</button>
+      <div class="error-msg" id="error-msg"></div>
+      <div class="loading-card" id="loading">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+        <div style="font-size:14px;color:var(--text-muted);margin-bottom:1rem">Building your personalised itinerary...</div>
+        <div class="loading-steps">
+          <div class="loading-step active" id="ls1">Finding the best local spots...</div>
+          <div class="loading-step" id="ls2">Adding honest warnings...</div>
+          <div class="loading-step" id="ls3">Building your packing list...</div>
+          <div class="loading-step" id="ls4">Adding language phrases...</div>
+          <div class="loading-step" id="ls5">Finalising your itinerary...</div>
+        </div>
+      </div>
+      <div class="results" id="results">
+        <div class="results-header">
+          <div class="results-title">Your itinerary</div>
+          <div class="results-dest" id="results-dest"></div>
+        </div>
+        <div class="img-gallery" id="img-gallery"></div>
+        <div class="img-credit" id="img-credit"></div>
+        <div class="weather-card" id="weather-card">
+          <div class="section-label-sm">7-day weather forecast</div>
+          <div class="weather-row" id="weather-row"></div>
+        </div>
+        <div class="search-links">
+          <div class="section-label-sm">Find flights and hotels</div>
+          <div class="search-links-grid" id="search-links-grid"></div>
+        </div>
+        <div class="map-card">
+          <div class="map-header">
+            <span class="section-label-sm" style="margin:0">Day map</span>
+            <select class="map-day-select" id="map-day-select" onchange="updateMap()"></select>
+          </div>
+          <iframe id="map-frame" src="" title="Map"></iframe>
+        </div>
+        <div class="budget-tracker">
+          <div class="budget-tracker-header">
+            <span class="budget-tracker-title">Budget tracker</span>
+            <span class="budget-total" id="budget-total-label"></span>
+          </div>
+          <div class="budget-bar-wrap"><div class="budget-bar" id="budget-bar" style="width:0%"></div></div>
+          <div class="budget-stats"><span class="budget-spent" id="budget-spent">$0 spent</span><span id="budget-remaining"></span></div>
+        </div>
+        <div id="days-container"></div>
+        <div id="extras-container"></div>
+        <div class="email-capture">
+          <div class="email-capture-title">Get this itinerary in your inbox</div>
+          <div class="email-capture-sub">We will email you the full itinerary so you have it offline.</div>
+          <div class="email-row">
+            <input type="email" id="email-input" placeholder="your@email.com"/>
+            <button class="email-send-btn" onclick="sendEmail()">Send</button>
+          </div>
+          <div class="email-sent" id="email-sent">Itinerary sent to your inbox!</div>
+        </div>
+        <div class="action-row">
+          <button class="action-btn btn-save" onclick="saveItinerary()">Save itinerary</button>
+          <button class="action-btn btn-whatsapp" onclick="openShareModal()">Share itinerary</button>
+          <button class="action-btn btn-pdf" onclick="exportPDF()">Download PDF</button>
+          <button class="action-btn btn-reset" onclick="resetForm()">Plan another trip</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOW MODE TAB -->
+    <div class="tab-panel" id="panel-nowmode">
+      <div class="now-card">
+        <div class="now-title">I am already there</div>
+        <div class="now-sub">Already at your destination and not sure what to do right now? Tell us where you are and we will give you instant real-time recommendations.</div>
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group">
+            <label>Where are you right now?</label>
+            <input type="text" id="now-location" placeholder="e.g. Shibuya, Tokyo"/>
+          </div>
+          <div class="form-group">
+            <label>What time is it there?</label>
+            <input type="text" id="now-time" placeholder="e.g. 2:30 PM"/>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group">
+            <label>Daily budget (USD)</label>
+            <input type="number" id="now-budget" placeholder="150" value="150"/>
+          </div>
+          <div class="form-group">
+            <label>Spent today so far ($)</label>
+            <input type="number" id="now-spent" placeholder="0" value="0"/>
+          </div>
+        </div>
+        <button class="now-generate-btn" id="now-btn" onclick="generateNow()">Tell me what to do right now</button>
+        <div class="error-msg" id="now-error"></div>
+        <div class="now-result" id="now-result"></div>
+      </div>
+    </div>
+
+    <!-- SAVED TAB -->
+    <div class="tab-panel" id="panel-saved">
+      <div id="saved-content" style="margin-top:1rem"></div>
+    </div>
+  </div>
+</div>
+
+<footer>TripGenius — AI-powered travel planning · Photos by Unsplash · Free to use</footer>
+</div>
+
+<script>
+// Set min date to today
+(function initDates(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('date-start').min = today;
+  document.getElementById('date-end').min = today;
+  // Default: start tomorrow, end in 5 days
+  const start = new Date(); start.setDate(start.getDate()+1);
+  const end = new Date(); end.setDate(end.getDate()+5);
+  document.getElementById('date-start').value = start.toISOString().split('T')[0];
+  document.getElementById('date-end').value = end.toISOString().split('T')[0];
+  onDateChange();
+})();
+
+function onDateChange(){
+  const s = document.getElementById('date-start').value;
+  const e = document.getElementById('date-end').value;
+  const hint = document.getElementById('date-hint');
+  if(!s || !e){ hint.className='date-hint'; return; }
+  const start = new Date(s), end = new Date(e), today = new Date();
+  today.setHours(0,0,0,0);
+  if(end <= start){ hint.textContent='End date must be after start date.'; hint.className='date-hint warn visible'; return; }
+  const days = Math.round((end-start)/(1000*60*60*24));
+  if(days > 21){ hint.textContent='Maximum trip length is 21 days.'; hint.className='date-hint warn visible'; return; }
+  // Check if weather is fetchable (within 5 days from today)
+  const daysFromToday = Math.round((start-today)/(1000*60*60*24));
+  const endDaysFromToday = Math.round((end-today)/(1000*60*60*24));
+  if(daysFromToday > 5){
+    hint.textContent = days+' day trip · Weather forecast not available this far in advance — will be shown closer to your trip date.';
+    hint.className='date-hint warn visible';
+  } else if(endDaysFromToday > 5){
+    hint.textContent = days+' day trip · Weather shown for the first '+Math.min(5-daysFromToday+1,days)+' days of your trip.';
+    hint.className='date-hint ok visible';
+  } else {
+    hint.textContent = days+' day trip · Full weather forecast available for your dates!';
+    hint.className='date-hint ok visible';
+  }
+  // Also update end date min
+  document.getElementById('date-end').min = s;
+}
+
+function getTripDays(){
+  const s = document.getElementById('date-start').value;
+  const e = document.getElementById('date-end').value;
+  if(!s || !e) return 5;
+  const days = Math.round((new Date(e)-new Date(s))/(1000*60*60*24));
+  return Math.max(1, Math.min(days, 21));
+}
+
+function isWeatherAvailable(){
+  const s = document.getElementById('date-start').value;
+  if(!s) return true;
+  const start = new Date(s), today = new Date();
+  today.setHours(0,0,0,0);
+  const daysFromToday = Math.round((start-today)/(1000*60*60*24));
+  return daysFromToday <= 5;
+}
+let currentDest='', currentDays=5, currentBudget=200;
+let dayLocations={}, allText='';
+
+// Nav
+function showLanding(){document.getElementById('landing').className='landing';document.getElementById('app-view').className='app-view'}
+function showApp(tab){document.getElementById('landing').className='landing-hidden';document.getElementById('app-view').className='app-view visible';switchTab(tab)}
+function switchTab(t){
+  document.querySelectorAll('.app-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('panel-'+t).classList.add('active');
+  if(t==='saved')renderSaved();
+}
+
+// Theme
+let isLight=false;
+function toggleTheme(){
+  isLight=!isLight;
+  document.body.className=isLight?'light':'';
+  document.querySelector('.theme-toggle').textContent=isLight?'🌙':'☀️';
+}
+
+// Overlay
+function openOverlay(id){document.getElementById(id).className='overlay visible'}
+function closeOverlay(id){document.getElementById(id).className='overlay'}
+
+// Quiz
+function selQ(el){document.querySelectorAll('[data-q="'+el.dataset.q+'"]').forEach(b=>b.classList.remove('selected'));el.classList.add('selected')}
+function submitQuiz(){
+  const qs=['pace','accommodation','food','social','priority'],a={};
+  for(const q of qs){const s=document.querySelector('.quiz-opt.selected[data-q="'+q+'"]');if(!s){alert('Please answer all 5 questions!');return}a[q]=s.dataset.v}
+  quizAnswers=a;closeOverlay('quiz-overlay');
+  document.getElementById('quiz-badge').textContent='Travel profile saved!';
+  document.getElementById('quiz-badge').style.color='var(--accent2)';
+  document.getElementById('quiz-badge').style.borderColor='rgba(94,234,212,0.3)';
+}
+
+// Form helpers
+function selVibe(el,v){document.querySelectorAll('.vibe-btn').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');selectedVibe=v}
+function toggleMode(){const m=document.getElementById('trip-mode').value;document.getElementById('single-dest').style.display=m==='single'?'block':'none';document.getElementById('multi-dest').style.display=m==='multi'?'block':'none'}
+function addCity(){const l=document.getElementById('cities-list'),n=l.children.length+1;const r=document.createElement('div');r.className='city-row';r.innerHTML='<input type="text" placeholder="City '+n+'"/><button class="city-remove" onclick="this.parentElement.remove()">✕</button>';l.appendChild(r)}
+function toggleGroup(){isGroup=!isGroup;document.getElementById('group-toggle').textContent=isGroup?'Group':'Solo';document.getElementById('group-toggle').className=isGroup?'group-toggle on':'group-toggle';document.getElementById('group-extra').className=isGroup?'group-extra visible':'group-extra';updateBudgetLabel()}
+function updateBudgetLabel(){const b=parseInt(document.getElementById('budget').value),g=isGroup?parseInt(document.getElementById('group-size').value)||2:1,pp=Math.round(b/g);document.getElementById('budget-val').textContent=isGroup?'$'+b+'/day ($'+pp+'/p)':'$'+b+'/day'}
+
+// Sample loader
+function loadSample(dest,days,vibe){
+  showApp('planner');
+  document.getElementById('destination').value=dest;
+  document.getElementById('days').value=days;
+  document.querySelectorAll('.vibe-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.vibe-btn').forEach(b=>{if(b.textContent.trim().includes(vibe))b.classList.add('selected')});
+  selectedVibe=vibe;
+  setTimeout(()=>document.getElementById('gen-btn').scrollIntoView({behavior:'smooth'}),300);
+}
+
+// Budget tracker
+let totalBudget=0;
+function updateBudget(){
+  const spent=Array.from(document.querySelectorAll('.day-spend-input')).reduce((s,i)=>s+(parseFloat(i.value)||0),0);
+  const pct=Math.min((spent/totalBudget)*100,100);
+  const bar=document.getElementById('budget-bar');bar.style.width=pct+'%';bar.className=spent>totalBudget?'budget-bar over':'budget-bar';
+  const el=document.getElementById('budget-spent');el.textContent='$'+spent.toFixed(0)+' spent';el.className=spent>totalBudget?'budget-spent over':'budget-spent';
+  const rem=totalBudget-spent;document.getElementById('budget-remaining').textContent=rem>=0?'$'+rem.toFixed(0)+' remaining':'$'+Math.abs(rem).toFixed(0)+' over budget';
+}
+
+// Parsing
+function parseWarnings(t){return t.replace(/honest warning[:\-]?\s*([^\n]+)/gi,'<div class="warning-block"><strong>Honest warning</strong>$1</div>')}
+function wxIcon(d){const l=d.toLowerCase();if(l.includes('rain'))return'🌧️';if(l.includes('cloud'))return'⛅';if(l.includes('sun')||l.includes('clear'))return'☀️';if(l.includes('snow'))return'❄️';if(l.includes('thunder'))return'⛈️';if(l.includes('fog')||l.includes('mist'))return'🌫️';return'🌤️'}
+
+// Map
+function updateMap(){const sel=document.getElementById('map-day-select'),locs=dayLocations[sel.value];if(!locs||!locs.length)return;const q=encodeURIComponent(locs[0]+', '+currentDest);document.getElementById('map-frame').src='https://maps.google.com/maps?q='+q+'&output=embed&z=13'}
+
+// Search links
+function buildSearchLinks(dest){
+  const enc=encodeURIComponent(dest);
+  const links=[{n:'Skyscanner',t:'Flights',u:'https://www.skyscanner.net/transport/flights/anywhere/'+enc+'/'},{n:'Booking.com',t:'Hotels',u:'https://www.booking.com/search.html?ss='+enc},{n:'Hostelworld',t:'Hostels',u:'https://www.hostelworld.com/search?search_keywords='+enc}];
+  const g=document.getElementById('search-links-grid');g.innerHTML='';
+  links.forEach(l=>{const a=document.createElement('a');a.href=l.u;a.target='_blank';a.className='sl-btn';a.innerHTML='<span class="sl-name">'+l.n+'</span><span class="sl-type">'+l.t+'</span>';g.appendChild(a)});
+}
+
+// Loading animation
+let loadingInterval;
+function startLoadingAnim(){
+  const steps=['ls1','ls2','ls3','ls4','ls5'];let i=0;
+  document.querySelectorAll('.loading-step').forEach(s=>s.className='loading-step');
+  document.getElementById('ls1').className='loading-step active';
+  loadingInterval=setInterval(()=>{
+    i++;if(i>=steps.length)return;
+    document.getElementById(steps[i-1]).className='loading-step done';
+    document.getElementById(steps[i]).className='loading-step active';
+  },2500);
+}
+function stopLoadingAnim(){clearInterval(loadingInterval)}
+
+// Saved
+function saveItinerary(){
+  if(!allText){alert('Generate an itinerary first!');return}
+  const saved=JSON.parse(localStorage.getItem('tg_saved')||'[]');
+  saved.unshift({destination:currentDest,days:currentDays,budget:currentBudget,text:allText,date:new Date().toLocaleDateString()});
+  localStorage.setItem('tg_saved',JSON.stringify(saved.slice(0,25)));
+  alert('Itinerary saved!');
+}
+function renderSaved(){
+  const saved=JSON.parse(localStorage.getItem('tg_saved')||'[]');
+  const c=document.getElementById('saved-content');
+  if(!saved.length){c.innerHTML='<div class="saved-empty">No saved trips yet.<br/>Generate an itinerary and click Save!</div>';return}
+  c.innerHTML='<div class="saved-grid">'+saved.map((t,i)=>`<div class="saved-item"><div><div class="saved-item-title">${t.destination}</div><div class="saved-item-meta">${t.days} days · $${t.budget}/day · ${t.date}</div></div><div class="saved-item-btns"><button class="saved-load" onclick="loadSavedTrip(${i})">Load</button><button class="saved-del" onclick="delSaved(${i})">Delete</button></div></div>`).join('')+'</div>';
+}
+function loadSavedTrip(i){
+  const saved=JSON.parse(localStorage.getItem('tg_saved')||'[]');
+  const t=saved[i];if(!t)return;
+  document.getElementById('destination').value=t.destination;
+  document.getElementById('days').value=t.days;
+  document.getElementById('budget').value=t.budget;
+  updateBudgetLabel();
+  switchTab('planner');
+}
+function delSaved(i){const saved=JSON.parse(localStorage.getItem('tg_saved')||'[]');saved.splice(i,1);localStorage.setItem('tg_saved',JSON.stringify(saved));renderSaved()}
+
+// Share modal
+function buildFullItineraryText(){
+  if(!allText) return '';
+  const dest = currentDest;
+  const days = currentDays;
+  const budget = currentBudget;
+  const clean = allText.replace(/<[^>]+>/g,'');
+  return `✈️ MY TRIPGENIUS ITINERARY\n📍 ${dest} — ${days} days — $${budget}/day\n${'─'.repeat(40)}\n\n${clean}\n\n${'─'.repeat(40)}\nPlanned free at tripgenius-app.netlify.app`;
+}
+
+function openShareModal(){
+  if(!allText){alert('Generate an itinerary first!');return;}
+  const text = buildFullItineraryText();
+  const enc = encodeURIComponent(text);
+  const shortEnc = encodeURIComponent(text.slice(0,1000)+'...\n\nFull itinerary: tripgenius-app.netlify.app');
+
+  // Fill copy input
+  document.getElementById('share-copy-input').value = text;
+
+  // Build share apps
+  const apps = [
+    {name:'WhatsApp', icon:'💬', url:'https://wa.me/?text='+enc},
+    {name:'Telegram', icon:'✈️', url:'https://t.me/share/url?url=https://tripgenius-app.netlify.app&text='+enc},
+    {name:'Twitter', icon:'🐦', url:'https://twitter.com/intent/tweet?text='+shortEnc},
+    {name:'Facebook', icon:'👥', url:'https://www.facebook.com/sharer/sharer.php?u=https://tripgenius-app.netlify.app&quote='+shortEnc},
+    {name:'Email', icon:'📧', url:'mailto:?subject=My '+currentDest+' Itinerary from TripGenius&body='+enc},
+    {name:'SMS', icon:'💬', url:'sms:?body='+enc},
+    {name:'Reddit', icon:'🔴', url:'https://reddit.com/submit?url=https://tripgenius-app.netlify.app&title=My '+currentDays+' day '+currentDest+' itinerary'},
+    {name:'Native Share', icon:'📤', url:'native'},
+  ];
+
+  const grid = document.getElementById('share-grid');
+  grid.innerHTML = '';
+  apps.forEach(app => {
+    const btn = document.createElement('button');
+    btn.className = 'share-app-btn';
+    btn.innerHTML = '<span class="share-app-icon">'+app.icon+'</span><span class="share-app-name">'+app.name+'</span>';
+    if(app.url === 'native'){
+      btn.onclick = () => nativeShare(text);
+    } else {
+      btn.onclick = () => window.open(app.url, '_blank');
+    }
+    grid.appendChild(btn);
+  });
+
+  openOverlay('share-overlay');
+}
+
+async function nativeShare(text){
+  if(navigator.share){
+    try{
+      await navigator.share({title:'My '+currentDest+' Itinerary — TripGenius', text: text});
+    }catch(e){}
+  } else {
+    copyItinerary();
+    alert('Copied to clipboard! Paste it anywhere.');
+  }
+}
+
+function copyItinerary(){
+  const input = document.getElementById('share-copy-input');
+  input.select();
+  try{
+    navigator.clipboard.writeText(input.value).catch(()=>document.execCommand('copy'));
+  }catch(e){document.execCommand('copy')}
+  const btn = document.getElementById('share-copy-btn');
+  btn.textContent = 'Copied!';
+  btn.className = 'share-copy-btn copied';
+  setTimeout(()=>{btn.textContent='Copy';btn.className='share-copy-btn'},2500);
+}
+
+// WhatsApp (kept as fallback)
+function shareWhatsApp(){openShareModal()}
+
+// Email
+async function sendEmail(){
+  const email=document.getElementById('email-input').value.trim();
+  if(!email||!email.includes('@')){alert('Please enter a valid email.');return}
+  try{
+    await fetch('/.netlify/functions/send-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,destination:currentDest,days:currentDays,itinerary:allText})});
+    document.getElementById('email-sent').className='email-sent visible';
+  }catch(e){}
+}
+
+// PDF
+function exportPDF(){
+  if(!allText)return;
+  const {jsPDF}=window.jspdf;const doc=new jsPDF();
+  doc.setFont('helvetica','bold');doc.setFontSize(20);doc.text('TripGenius Itinerary',20,20);
+  doc.setFont('helvetica','normal');doc.setFontSize(12);doc.text(currentDest+' — '+currentDays+' days',20,30);
+  doc.setFontSize(9);const lines=doc.splitTextToSize(allText.replace(/<[^>]+>/g,''),170);doc.text(lines,20,42);
+  doc.save('TripGenius-'+currentDest.replace(/\s+/g,'-')+'.pdf');
+}
+
+// Regenerate day
+async function regenDay(n){
+  const btn=document.getElementById('regen-'+n);btn.disabled=true;btn.textContent='Regenerating...';
+  try{
+    const r=await fetch('/.netlify/functions/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:currentDest,days:currentDays,budget:currentBudget,vibe:selectedVibe,notes:document.getElementById('notes').value,quizAnswers,regenerateDay:{dayNum:n}})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Error');
+    const card=document.getElementById('dc-'+n);
+    if(card){const content=d.text.replace(/^DAY \d+:[^\n]*/i,'').trim();card.querySelector('.day-content').innerHTML=parseWarnings(content)}
+  }catch(e){alert('Could not regenerate. Try again.')}
+  btn.disabled=false;btn.textContent='Regenerate day';
+}
+
+// Now mode
+async function generateNow(){
+  const loc=document.getElementById('now-location').value.trim();
+  const time=document.getElementById('now-time').value.trim();
+  const budget=document.getElementById('now-budget').value;
+  const spent=document.getElementById('now-spent').value;
+  const errEl=document.getElementById('now-error');
+  errEl.className='error-msg';
+  if(!loc){errEl.textContent='Please enter your current location.';errEl.className='error-msg visible';return}
+  const btn=document.getElementById('now-btn');btn.disabled=true;btn.textContent='Finding what to do...';
+  try{
+    const r=await fetch('/.netlify/functions/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:loc,mode:'nowmode',currentLocation:loc,currentTime:time||'Now',budget,spentSoFar:spent})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error||'Error');
+    const result=document.getElementById('now-result');result.textContent=d.text;result.className='now-result visible';
+  }catch(e){errEl.textContent=e.message||'Something went wrong.';errEl.className='error-msg visible'}
+  btn.disabled=false;btn.textContent='Tell me what to do right now';
+}
+
+// Main generate
+async function generateItinerary(){
+  const mode=document.getElementById('trip-mode').value;
+  let dest='',cities=[];
+  if(mode==='multi'){cities=Array.from(document.querySelectorAll('#cities-list input')).map(i=>i.value.trim()).filter(Boolean);if(cities.length<2){showErr('Please enter at least 2 cities.');return}dest=cities.join(' to ')}
+  else{dest=document.getElementById('destination').value.trim();if(!dest){showErr('Please enter a destination.');return}}
+
+  // Validate dates
+  const startDate=document.getElementById('date-start').value;
+  const endDate=document.getElementById('date-end').value;
+  if(!startDate||!endDate){showErr('Please select your travel dates.');return}
+  if(new Date(endDate)<=new Date(startDate)){showErr('End date must be after start date.');return}
+
+  const days=getTripDays();
+  const budget=parseInt(document.getElementById('budget').value);
+  const notes=document.getElementById('notes').value.trim();
+  const weatherOk=isWeatherAvailable();
+
+  document.getElementById('error-msg').className='error-msg';
+  currentDest=dest;currentDays=days;currentBudget=budget;totalBudget=budget*days;dayLocations={};allText='';
+  document.getElementById('gen-btn').disabled=true;
+  document.getElementById('loading').className='loading-card visible';
+  document.getElementById('results').className='results';
+  document.getElementById('days-container').innerHTML='';
+  document.getElementById('extras-container').innerHTML='';
+  document.getElementById('img-gallery').innerHTML='';
+  document.getElementById('img-credit').innerHTML='';
+  document.getElementById('weather-card').className='weather-card';
+  document.getElementById('email-sent').className='email-sent';
+  startLoadingAnim();
+  try{
+    const r=await fetch('/.netlify/functions/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({destination:dest,days,budget,vibe:selectedVibe,notes,quizAnswers,cities:mode==='multi'?cities:null,startDate,endDate})});
+    const data=await r.json();if(!r.ok)throw new Error(data.error||'Something went wrong');
+    allText=data.text;
+
+    // Images
+    if(data.images&&data.images.length){
+      const g=document.getElementById('img-gallery');
+      data.images.slice(0,5).forEach(img=>{const el=document.createElement('img');el.src=img.thumb;el.alt=img.alt;el.loading='lazy';g.appendChild(el)});
+      const c=data.images[0];document.getElementById('img-credit').innerHTML='Photos by <a href="'+c.creditLink+'?utm_source=tripgenius&utm_medium=referral" target="_blank">'+c.credit+'</a> and others on <a href="https://unsplash.com?utm_source=tripgenius&utm_medium=referral" target="_blank">Unsplash</a>';
+    }
+
+    // Weather — only show if within forecast range
+    if(weatherOk && data.weather && data.weather.length){
+      const wr=document.getElementById('weather-row');wr.innerHTML='';
+      data.weather.forEach(d=>{const el=document.createElement('div');el.className='weather-day';el.innerHTML='<div class="weather-day-name">'+d.date+'</div><div class="weather-icon">'+wxIcon(d.desc)+'</div><div class="weather-temp">'+d.temp+'°C</div><div class="weather-desc">'+d.desc+'</div>';wr.appendChild(el)});
+      document.getElementById('weather-card').className='weather-card visible';
+    } else if(!weatherOk){
+      // Show a friendly message instead
+      const wCard=document.getElementById('weather-card');
+      wCard.innerHTML='<div class="section-label-sm">Weather forecast</div><div style="font-size:13px;color:var(--text-muted);padding:4px 0">Your trip is too far ahead for a live forecast. Check back closer to <strong style="color:var(--text)">'+new Date(startDate).toLocaleDateString('en-US',{month:'long',day:'numeric'})+'</strong> for accurate weather.</div>';
+      wCard.className='weather-card visible';
+    }
+
+    buildSearchLinks(mode==='multi'?cities[0]:dest);
+    document.getElementById('budget-total-label').textContent='Total: $'+totalBudget+(isGroup?' ('+document.getElementById('group-size').value+' people)':'');
+    document.getElementById('budget-remaining').textContent='$'+totalBudget+' remaining';
+    updateBudget();
+
+    // Split sections
+    const ft=data.text;
+    const packMatch=ft.match(/PACKING LIST:([\s\S]*?)(?=PHRASEBOOK:|GETTING AROUND:|$)/i);
+    const phraseMatch=ft.match(/PHRASEBOOK:([\s\S]*?)(?=GETTING AROUND:|$)/i);
+    const aroundMatch=ft.match(/GETTING AROUND:([\s\S]*?)$/i);
+    const mainText=ft.replace(/PACKING LIST:[\s\S]*/i,'');
+    const dayBlocks=mainText.split(/(?=DAY \d+:)/i).filter(d=>d.trim());
+
+    const container=document.getElementById('days-container');
+    const mapSel=document.getElementById('map-day-select');mapSel.innerHTML='';
+
+    dayBlocks.forEach((block,i)=>{
+      const tm=block.match(/^DAY \d+:\s*(.+)?/i);
+      const title=tm&&tm[1]?tm[1].trim():'';
+      let content=block.replace(/^DAY \d+:[^\n]*/i,'').trim();
+      const locMatch=content.match(/LOCATIONS:\s*([^\n]+)/i);
+      if(locMatch){dayLocations['day'+(i+1)]=locMatch[1].split('|').map(l=>l.trim()).filter(Boolean);content=content.replace(/LOCATIONS:[^\n]*/i,'').trim()}
+      const opt=document.createElement('option');opt.value='day'+(i+1);opt.textContent='Day '+(i+1)+(title?' — '+title:'');mapSel.appendChild(opt);
+      const div=document.createElement('div');div.className='day-card';div.id='dc-'+(i+1);div.style.animationDelay=(i*0.07)+'s';
+      div.innerHTML='<div class="day-card-header"><span class="day-badge">Day '+(i+1)+(title?' · '+title:'')+'</span><div class="day-header-right"><div class="day-cost-row"><label>Spent ($)</label><input type="number" class="day-spend-input" placeholder="0" min="0" oninput="updateBudget()"/></div><button class="regen-btn" id="regen-'+(i+1)+'" onclick="regenDay('+(i+1)+')">Regenerate</button></div></div><div class="day-content">'+parseWarnings(content)+'</div>';
+      container.appendChild(div);
+    });
+    updateMap();
+
+    const extras=document.getElementById('extras-container');
+    const sections=[{label:'Packing list',match:packMatch},{label:'Language phrasebook',match:phraseMatch},{label:'Getting around',match:aroundMatch}];
+    sections.forEach(s=>{
+      if(s.match){const div=document.createElement('div');div.className='extra-section';div.innerHTML='<div class="section-label-sm">'+s.label+'</div><div class="extra-content">'+s.match[1].trim()+'</div>';extras.appendChild(div)}
+    });
+
+    document.getElementById('results-dest').textContent=dest+' · '+new Date(startDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+new Date(endDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    document.getElementById('results').className='results visible';
+    document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(err){showErr(err.message||'Something went wrong. Please try again.')}
+  stopLoadingAnim();
+  document.getElementById('gen-btn').disabled=false;
+  document.getElementById('loading').className='loading-card';
+}
+
+function showErr(msg){const el=document.getElementById('error-msg');el.textContent=msg;el.className='error-msg visible'}
+
+function resetForm(){
+  document.getElementById('destination').value='';document.getElementById('days').value='5';document.getElementById('budget').value='200';updateBudgetLabel();document.getElementById('notes').value='';document.getElementById('results').className='results';document.getElementById('error-msg').className='error-msg';document.querySelectorAll('.vibe-btn').forEach(b=>b.classList.remove('selected'));document.querySelectorAll('.vibe-btn')[2].classList.add('selected');selectedVibe='Cultural';allText='';window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
